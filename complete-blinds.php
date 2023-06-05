@@ -104,7 +104,54 @@ function cb_register_taxonomy_blind_type() {
      register_taxonomy( 'blind_type', [ 'product' ], $args );
 }
 
+//add inital values 
+$terms = array(
+  'Honeycomb' => 'honeycomb',
+  'Metro Hood' => 'metro-hood',
+  'Panel Glide' => 'panel-glide',
+  'Roller' => array(
+    'Double' => 'roller-double',
+    'Double Linked' => 'roller-double-linked',
+    'Single' => 'roller-single',
+    'Single Linked' => 'roller-single-linked',
+    'Skin and Base Rail' => 'roller-skin-and-base-rail',
+    'Skin and Tube' => 'roller-skin-and-tube',
+    'Skin Only' => 'roller-skin-only',
+  ),
+  'Roman' => 'roman',
+  'Venetian' => array(
+    'Aluminium' => 'venetian-aluminium',
+    'Timber' => 'venetian-timber',
+  ),
+  'Vertical' => array(
+    '89mm' => 'vertical-89mm',
+    '100mm' => 'vertical-100mm',
+    '127mm' => 'vertical-127mm',
+    'Blade 89mm' => 'vertical-blade-89mm',
+    'Blade 100mm' => 'vertical-blade-100mm',
+    'Blade 127mm' => 'vertical-blade-127mm',
+    'Track Only' => 'vertical-track-only',
+  ),
+    'Visage' => 'visage',
+    'Vision' => 'vision',
+);
+
+// Loop through the terms and insert them
+foreach ( $terms as $name => $slug_or_children ) {
+  // If the term has children, insert the parent term first
+  if ( is_array( $slug_or_children ) ) {
+      $parent = wp_insert_term( $name, 'blind_type', array( 'slug' => sanitize_title( $name ) ) );
+      foreach ( $slug_or_children as $child_name => $child_slug ) {
+          wp_insert_term( $child_name, 'blind_type', array( 'parent' => $parent['term_id'], 'slug' => $child_slug ) );
+      }
+  } else {
+      wp_insert_term( $name, 'blind_type', array( 'slug' => $slug_or_children ) );
+  }
+}
+
 add_action( 'init', 'cb_register_taxonomy_blind_type' );
+
+
 
 //resolves supplier name from product meta
 add_action( 'graphql_register_types', function() {
