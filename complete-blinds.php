@@ -102,7 +102,7 @@ function cb_register_taxonomy_blind_type() {
          'rewrite'           => [ 'slug' => 'blind_type' ],
      );
      register_taxonomy( 'blind_type', [ 'product' ], $args );
-}
+
 
 //add inital values 
 $terms = array(
@@ -137,17 +137,26 @@ $terms = array(
 );
 
 // Loop through the terms and insert them
-foreach ( $terms as $name => $slug_or_children ) {
-  // If the term has children, insert the parent term first
-  if ( is_array( $slug_or_children ) ) {
-      $parent = wp_insert_term( $name, 'blind_type', array( 'slug' => sanitize_title( $name ) ) );
-      foreach ( $slug_or_children as $child_name => $child_slug ) {
-          wp_insert_term( $child_name, 'blind_type', array( 'parent' => $parent['term_id'], 'slug' => $child_slug ) );
+      foreach ( $terms as $name => $slug_or_children ) {
+        // If the term has children, insert the parent term first
+        if ( is_array( $slug_or_children ) ) {
+            $parent_slug = sanitize_title( $name );
+            $parent = wp_insert_term( $name, 'blind_type', array( 'slug' => $parent_slug ) );
+            if ( is_wp_error( $parent ) ) {
+                echo 'Error inserting parent term: ' . $parent->get_error_message() . PHP_EOL;
+                continue;
+            }
+            foreach ( $slug_or_children as $child_name => $child_slug ) {
+                $child_slug = $parent_slug . '/' . $child_slug;
+                wp_insert_term( $child_name, 'blind_type', array( 'parent' => $parent['term_id'], 'slug' => $child_slug ) );
+            }
+        } else {
+            wp_insert_term( $name, 'blind_type', array( 'slug' => $slug_or_children ) );
+        }
       }
-  } else {
-      wp_insert_term( $name, 'blind_type', array( 'slug' => $slug_or_children ) );
-  }
-}
+
+
+    }
 
 add_action( 'init', 'cb_register_taxonomy_blind_type' );
 
