@@ -1,0 +1,5 @@
+These files change the behaviour of WooCommerce but aren't WooCommerce templates etc. 
+
+producttab      => Adds a Custom Blinds tab to the admin screen on a WC Product
+filterElements  => Removes elements from WooCommerce that aren't applicable. Downloads, Virtual etc.
+taxonomyFilter  => Adds a filter to the admin screen by fabric type eg blockout, light filtering, etc. 
