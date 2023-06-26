@@ -103,7 +103,6 @@ function cblinds_product_options_product_data() {
 
             foreach ($blind_types as $group ) {
                 $groupID = 'cblinds_pricing_group_' . $group->slug;
-                print_r($groupID);
                 woocommerce_wp_select(
                     array(
                     'id' => $groupID,
