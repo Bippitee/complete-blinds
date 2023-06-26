@@ -9,6 +9,34 @@
  * Text Domain: complete-blinds
  */
 
+register_activation_hook( __FILE__, 'create_pricing_table' );
+ 
+function create_pricing_table() {
+    global $wpdb;
+
+    // Set pricing table name
+    $table_name = $wpdb->prefix . 'blind_pricing';
+
+    // Define the SQL query to create the pricing table
+    $sql = "CREATE TABLE IF NOT EXISTS $table_name (
+            id INT(11) NOT NULL AUTO_INCREMENT,
+            blind_type VARCHAR(255) NOT NULL,
+            group_number INT(11) NOT NULL,
+            blind_width DECIMAL(10,2) NOT NULL,
+            blind_drop DECIMAL(10,2) NOT NULL,
+            price DECIMAL(10,2) NOT NULL,
+            PRIMARY KEY  (id),
+            KEY blind_type (blind_type),
+            KEY group_number (group_number),
+            KEY blind_width (blind_width),
+            KEY blind_drop (blind_drop)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
+
+    // Execute the SQL query
+    require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+    dbDelta( $sql );
+}
+
 
 if (! defined('ABSPATH')) {
     return;
@@ -25,9 +53,22 @@ function enqueue_complete_blinds_script() {
     wp_localize_script('complete-blinds-script', 'api', $scriptData);
 //   wp_enqueue_script( 'google-maps', 'https://maps.googleapis.com/maps/api/js?key=' . get_option( 'complete_blinds_google_maps_api_key' ) . '&libraries=places', array(), '1.0', true );
   wp_enqueue_script( 'address-book-admin', plugin_dir_url(__FILE__) . '/js/address-book-admin.js', array( 'jquery' ), '1.0', true );
+
+  //pricing tables
+  wp_enqueue_script( 'pricing_tables', plugin_dir_url( __FILE__ ) . 'js/pricing_tables.js', array( 'jquery' ), '1.0', true );
+  wp_localize_script( 'pricing_tables', 'myAjax', array(
+    'ajaxurl' => admin_url( 'admin-ajax.php' ),
+    'blind_pricing_nonce' => wp_create_nonce( 'blind_pricing_nonce_action' ),
+) );
 }
 
 add_action('admin_enqueue_scripts', 'enqueue_complete_blinds_script');
+
+function enqueue_complete_blinds_style() {
+  wp_enqueue_style('pricing-tables-style', plugin_dir_url(__FILE__) . '/css/pricing-tables-style.css');
+}
+
+add_action('admin_enqueue_scripts', 'enqueue_complete_blinds_style');
 
 include "admin-panel.php";
 include "address-book.php";
@@ -35,7 +76,9 @@ include "woo/producttab.php";
 include "woo/filterElements.php";
 include "woo/taxonomyFilter.php";
 include "media-folders.php";
-include "windows.php";
+include "pricing-tables.php";
+include "graphql/typedefs.php";
+include "graphql/resolvers.php";
 
 // GraphQL authentication et. al. 
 define( 'GRAPHQL_JWT_AUTH_SECRET_KEY', 'purple-monkey-dishwasher' );
@@ -70,6 +113,22 @@ function cb_register_taxonomy_fabric_type() {
 		 'rewrite'           => [ 'slug' => 'fabric_type' ],
 	 );
 	 register_taxonomy( 'fabric_type', [ 'product' ], $args );
+
+   //add inital values
+    $terms = array(
+      'Blockout' => 'bo',
+      'Light Filtering' => 'lf',
+      'Screen' => 'scn',
+      'Sheer' => 'shr',
+    );
+
+    $terms_exist = get_terms( 'fabric_type', array( 'hide_empty' => false ) );
+    if ( empty( $terms_exist ) && ! is_wp_error( $terms_exist ) ) {
+      foreach ( $terms as $term => $slug ) {
+        wp_insert_term( $term, 'fabric_type', array( 'slug' => $slug ) );
+      }
+    }
+
 }
 add_action( 'init', 'cb_register_taxonomy_fabric_type' );
 
@@ -110,32 +169,36 @@ $terms = array(
   'Metro Hood' => 'metro-hood',
   'Panel Glide' => 'panel-glide',
   'Roller' => array(
-    'Double' => 'roller-double',
-    'Double Linked' => 'roller-double-linked',
-    'Single' => 'roller-single',
-    'Single Linked' => 'roller-single-linked',
-    'Skin and Base Rail' => 'roller-skin-and-base-rail',
-    'Skin and Tube' => 'roller-skin-and-tube',
-    'Skin Only' => 'roller-skin-only',
+    'Double' => 'double',
+    'Double Linked' => 'double-linked',
+    'Single' => 'single',
+    'Single Linked' => 'single-linked',
+    'Skin and Base Rail' => 'skin-and-base-rail',
+    'Skin and Tube' => 'skin-and-tube',
+    'Skin Only' => 'skin-only',
   ),
   'Roman' => 'roman',
   'Venetian' => array(
-    'Aluminium' => 'venetian-aluminium',
-    'Timber' => 'venetian-timber',
+    'Aluminium' => 'aluminium',
+    'Timber' => 'timber',
   ),
   'Vertical' => array(
-    '89mm' => 'vertical-89mm',
-    '100mm' => 'vertical-100mm',
-    '127mm' => 'vertical-127mm',
-    'Blade 89mm' => 'vertical-blade-89mm',
-    'Blade 100mm' => 'vertical-blade-100mm',
-    'Blade 127mm' => 'vertical-blade-127mm',
-    'Track Only' => 'vertical-track-only',
+    '89mm' => '89mm',
+    '100mm' => '100mm',
+    '127mm' => '127mm',
+    'Blade 89mm' => 'blade-89mm',
+    'Blade 100mm' => 'blade-100mm',
+    'Blade 127mm' => 'blade-127mm',
+    'Track Only' => 'track-only',
   ),
     'Visage' => 'visage',
     'Vision' => 'vision',
 );
 
+//set a variable to check if the terms have been added already
+$terms_exist = get_terms( 'blind_type', array( 'hide_empty' => false ) );
+//if they don't exist, add them
+if ( empty( $terms_exist ) && ! is_wp_error( $terms_exist ) ) {
 // Loop through the terms and insert them
       foreach ( $terms as $name => $slug_or_children ) {
         // If the term has children, insert the parent term first
@@ -154,44 +217,16 @@ $terms = array(
             wp_insert_term( $name, 'blind_type', array( 'slug' => $slug_or_children ) );
         }
       }
+}
 
-
-    }
+}
 
 add_action( 'init', 'cb_register_taxonomy_blind_type' );
 
 
 
-//resolves supplier name from product meta
-add_action( 'graphql_register_types', function() {
-  register_graphql_field( 'Product', 'supplier', [
-     'type' => 'String',
-     'description' => __( 'Supplier of the fabric', 'complete-blinds' ),
-     'resolve' => function( $post ) {
 
-      $args = array(
-        'post_type' => 'address_book',
-        'tax_query' => array(
-            array(
-                'taxonomy' => 'address_book_contact_type',
-                'field' => 'slug',
-                'terms' => 'supplier'
-            )
-        ),
-        'orderby' => 'title',
-        'order' => 'ASC',
-    );
 
-       $suppliers = get_posts( $args );
-
-        $supplierID = get_post_meta( $post->ID, 'cblinds_product_info', true );
-        $supplier = get_the_title( $supplierID );
-        // $supplierWebsite = get_post_meta( $supplierID, '_address_book_website', true );
-       
-       return ! empty( $supplier ) ? $supplier : 'No Value';
-     }
-  ] );
-} );
 
 
 //gets SiteLogo from customizer

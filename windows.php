@@ -1,5 +1,5 @@
 <?php
-
+exit;
 function delete_cb_window_configurations() {
     $args = array(
         'post_type' => 'cb_window',
@@ -19,6 +19,8 @@ function delete_cb_window_configurations() {
 }
 
 // add_action('init', 'delete_cb_window_configurations');
+// exit;
+
 
 function create_custom_cb_window_door_post_type() {
     $labels = array(

@@ -84,6 +84,44 @@ function cblinds_product_options_product_data() {
             );
         ?>
     </div> <!-- end options group -->
+    <div class="options_group">
+        <h4 style="margin: 5px 0px 5px 5px;"><?php _e( 'Pricing Groups', 'complete-blinds' ); ?></h4>
+            <!-- get all the top level blind_types assigned to this product only  -->
+            <?php
+            $blind_types = get_terms( array(
+                'taxonomy' => 'blind_type',
+                'hide_empty' => false,
+                'parent' => 0,
+                'object_ids' => get_the_ID(),
+            ) );
+            //for each blind_type, make a dropdown for "groups" with options 0 -> 10
+            $groupOpts=[];
+            for ($i = 0; $i <= 10; $i++) {
+                $groupOpts[$i] = $i;
+            }
+
+
+            foreach ($blind_types as $group ) {
+                $groupID = 'cblinds_pricing_group_' . $group->slug;
+                print_r($groupID);
+                woocommerce_wp_select(
+                    array(
+                    'id' => $groupID,
+                    'label' => __( $group->name, 'complete-blinds' ),
+                    'options' => $groupOpts,
+                    'desc_tip' => 'true',
+                    'description' => __( 'Select a pricing group for this blind/fabric combination', 'complete-blinds' ),
+                    'type' => 'select',
+                   
+                    )
+
+                    );
+            }
+
+
+           
+            ?>
+    </div> <!-- end options group -->
     </div> <!-- end panel -->
     <?php
 }
@@ -104,6 +142,25 @@ update_post_meta( $post_id, $supplierData, esc_attr( $cblinds_product_info ) );
 //cblinds_australian_made
 $cblinds_australian_made = isset( $_POST['cblinds_australian_made'] ) ? 'yes' : 'no';
 update_post_meta( $post_id, 'cblinds_australian_made', $cblinds_australian_made );
+
+
+//cblinds_pricing_group
+$blind_types = get_terms( array(
+    'taxonomy' => 'blind_type',
+    'hide_empty' => false,
+    'parent' => 0,
+    'object_ids' => get_the_ID(),
+) );
+
+foreach ($blind_types as $group ) {
+    $groupID = 'cblinds_pricing_group_' . $group->slug;
+    $cblinds_pricing_group = $_POST[$groupID];
+    if( !empty( $cblinds_pricing_group ) ) {
+        update_post_meta( $post_id, $groupID, esc_attr( $cblinds_pricing_group ) );
+    }
+}
+
+
 
 }
 

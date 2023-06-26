@@ -1,0 +1,140 @@
+#pricing-table-body td {
+    position: relative;
+}
+
+#pricing-table-body .popup {
+    position: absolute;
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    /* max-width: 150px; */
+
+    top: 0;
+    left: 50%;
+    transform: translate(-50%, -95%);
+
+    background-color: var(--wc-content-bg);
+    padding: 5px;
+    border-radius: 5px;
+    box-shadow: 0 0 5px 0 rgba(0, 0, 0, 0.5);
+}
+
+.popup::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    z-index: 1;
+    transform: translate(-50%, -1px);
+    border-width: 6px;
+    border-style: solid;
+    
+    border-color: var(--wc-content-bg) transparent transparent transparent;
+}
+
+.popup:focus-within input, .popup:focus-within button {
+    border-color: #2271b1;
+    box-shadow: 0 0 0 1px #2271b1;
+}
+
+.popup input {
+    width: 150px;
+    border: 1px solid #8c8f94;
+    border-radius: 3px 0 0 3px;
+    border-right: 0;
+    margin-right: 0;
+}
+
+.popup button {
+    border-radius: 0 3px 3px 0;
+    border: 1px solid #8c8f94;
+    border-left: 0;
+    margin-left: 0;
+}
+
+.button-danger {
+    margin-top: 1rem !important;
+    background-color: #aa0000 !important;
+    color: #fff !important;
+    border-color: #700 !important;
+    text-transform: capitalize;
+}
+
+.success-message {
+    border-color: #070;
+    padding: 1rem;
+    color: #070;
+    font-weight: bold;
+}
+
+.file-upload {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+
+.file-upload p {
+    margin: 0;
+}
+
+.file-upload label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 2rem;
+    border: 2px solid #CBD5E0;
+    border-style: dashed;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    background-color: #F9FAFB;
+}
+
+.file-upload label:hover {
+    background-color: #EDF2F7;
+}
+
+.file-upload label.dark:hover {
+    background-color: #1F2937;
+    border-color: #4B5563;
+}
+
+.file-upload label.dark {
+    background-color: #1F2937;
+    border-color: #4B5563;
+}
+
+.file-upload label.dark:hover {
+    background-color: #4B5563;
+}
+
+.icon-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding-top: 5px;
+    padding-bottom: 6px;
+  }
+
+  .svg-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    margin-bottom: 0.75rem;
+    color: #A0AEC0;
+  }
+
+  .paragraph-text {
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+    color: #6B7280;
+  }
+  
+  .dark .paragraph-text {
+    color: #9CA3AF;
+  }
+
+  .font-semibold {
+    font-weight: 600;
+  }

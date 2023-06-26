@@ -11,14 +11,7 @@ function complete_blinds_register_settings() {
     'complete_blinds',
   );
 
-  // Register the Blinds settings page
-  add_settings_section(
-    'complete_blinds_blinds_section',
-    '',
-    'complete_blinds_blinds_section_callback',
-    'complete_blinds_blinds'
-  );
-
+  
   // Register the plugin settings fields
   //Google Maps API Key
   add_settings_field(
@@ -32,11 +25,9 @@ function complete_blinds_register_settings() {
   // Add more fields as needed
 
   // Register the settings
-  // register_setting('complete_blinds', 'complete_blinds_field1');
   register_setting('complete_blinds', 'complete_blinds_google_maps_api_key');
-  //->Blinds
-  register_setting('complete_blinds_blinds', 'complete_blinds_blinds_types');
   
+
 
   // Add more settings as needed
 }
@@ -48,76 +39,8 @@ add_action('admin_init', 'complete_blinds_register_settings');
 / ----------------------------------------------------------------------------------- */
 function complete_blinds_settings_section_callback() {
   echo 'Miscellaneous settings for the plugin.';
-}
+  
 
-
-function complete_blinds_blinds_section_callback() {
-  // update_option('complete_blinds_blinds_types', ''); //RESET
-  $blinds_types = get_option('complete_blinds_blinds_types');
-  $typeIndex = $blinds_types ? count($blinds_types) : 0;
-  echo '<table id="complete_blinds_blinds_types_table" class="wp-list-table widefat striped">';
-  echo '<thead><tr>';
-  echo '<th>Name</th>';
-  // echo '<th>Value/Slug</th>';
-  echo '<th>Has Subtypes</th>';
-  echo '</tr></thead>';
-  echo '<tbody>';
-
-  if ($blinds_types) {
-    foreach ($blinds_types as $index => $type) {
-
-      $value = isset($type['value']) ? esc_attr($type['value']) : '';
-      $label = isset($type['label']) ? esc_attr($type['label']) : '';
-      $has_subtypes = isset($type['has_subtypes']) && $type['has_subtypes'] ? 1 : 0;
-      echo '<tr>';
-      echo '<td><input type="text" name="complete_blinds_blinds_types[' . $value . '][label]" value="' . $label . '" /><input type="hidden" name="complete_blinds_blinds_types[' . $value . '][value]" value="' . $value . '" /></td>';
-      // echo '<td><input type="hidden" name="complete_blinds_blinds_types[' . $value . '][value]" value="' . $value . '" /></td>';
-      echo '<td><input type="checkbox" name="complete_blinds_blinds_types[' . $value . '][has_subtypes]" ' . checked($has_subtypes, 1, false) . ' /></td>';
-      echo '</tr>';
-
-      if ($has_subtypes) {
-          $subtypes = isset($type['subtypes']) && is_array($type['subtypes']) ? $type['subtypes'] : array();
-          echo '<tr id="subtypeTable'.$value.'">';
-          echo '<td colspan="3">';
-          
-          
-          echo '<table class="wp-list-table striped complete-blinds-subtypes-table" data-value="'.$value.'" aria-hidden="'.(sizeof($subtypes) < 1 ? 'true' : 'false' ).'">';
-          echo '<thead><tr>';
-          echo '<th>Name</th>';
-          // echo '<th>Value/Slug</th>';
-          echo '</tr></thead>';
-          echo '<tbody>';
-
-          foreach ($subtypes as $subtypeIndex => $subtype) {
-            
-              $subtypeValue = isset($subtype['value']) ? esc_attr($subtype['value']) : '';
-              $subtypeLabel = isset($subtype['label']) ? esc_attr($subtype['label']) : '';
-
-              echo '<tr>';
-              echo '<td><input type="text" name="complete_blinds_blinds_types[' . $value . '][subtypes][' . $subtypeIndex . '][label]" value="' . $subtypeLabel . '" /><input type="hidden"  name="complete_blinds_blinds_types[' . $value . '][subtypes][' . $subtypeIndex . '][value]" value="' . $subtypeValue . '" /></td>';
-              // echo '<td><input type="hidden"  name="complete_blinds_blinds_types[' . $value . '][subtypes][' . $subtypeIndex . '][value]" value="' . $subtypeValue . '" /></td>';
-              echo '</tr>';
-          }
-
-          echo '</tbody>';
-          echo '</table>';
-        
-
-          echo '<button type="button" class="complete-blinds-add-subtype">Add Subtype</button>';
-          
-          
-          
-          echo '</td>';
-          echo '</tr>';
-      }
-    }
-  } 
-
-  echo '</tbody>';
-  echo '</table>';
-
-  echo '<button type="button" id="complete_blinds_blinds_add_type">Add Type</button>';
- 
 }
 
 
@@ -128,6 +51,7 @@ function complete_blinds_blinds_section_callback() {
 function complete_blinds_google_maps_api_key_callback() {
   $google_maps_api_key = get_option('complete_blinds_google_maps_api_key');
   echo '<input type="text" style="width:300px;" name="complete_blinds_google_maps_api_key" value="' . esc_attr($google_maps_api_key) . '" />';
+  
 }
 
 // Add more field callback functions as needed
@@ -146,24 +70,69 @@ function complete_blinds_settings_page() {
   echo '</div>';
 }
 
-/* ----------------------------------------------------------------------------------- /
-/ Step 5: Create the sub-pages for Blinds
-/ ----------------------------------------------------------------------------------- */
-function complete_blinds_blinds_page() {
-    echo '<div class="wrap">';
-  echo '<h1>Blinds Settings</h1>';
-  ?>
-  <p>Blinds settings page description goes here.</p>
-  <?php
-  // Add content for Blinds settings page
-  echo '<form method="post" action="options.php">';
-  settings_fields('complete_blinds_blinds');
-  do_settings_sections('complete_blinds_blinds');
-  submit_button('Save Changes');
-  echo '</form>';
-  echo '</div>';
-}
 
+
+/* ----------------------------------------------------------------------------------- /
+/ Step 5.1: Create the pricing table sub-page for Blinds
+/ ----------------------------------------------------------------------------------- */
+function render_blind_pricing_page() {
+  // Retrieve blind types
+  $blind_types = get_terms( array(
+      'taxonomy'   => 'blind_type',
+      'hide_empty' => false,
+      'parent'     => 0,
+  ) );
+
+  // Dropdown for blind types
+  $blind_type_options = '<option value="">Select Blind Type</option>';
+  foreach ( $blind_types as $blind_type ) {
+      $blind_type_options .= sprintf(
+          '<option value="%s">%s</option>',
+          esc_attr( $blind_type->slug ),
+          esc_html( $blind_type->name )
+      );
+  }
+
+  // Dropdown for groups
+  $group_options = '<option value="0">0</option>';
+  for ( $i = 1; $i <= 10; $i++ ) {
+      $group_options .= sprintf(
+          '<option value="%d">%d</option>',
+          $i,
+          $i
+      );
+  }
+
+  ?>
+  <div class="wrap">
+    <h1>Blind Pricing</h1>
+    <form method="post" id="blind-pricing-form">
+        <label for="blind-type">Blind Type:</label>
+        <select name="blind-type" id="blind-type">
+            <?php echo $blind_type_options; ?>
+        </select>
+        <label for="group_number">Group:</label>
+        <select name="group_number" id="group_number">
+            <?php echo $group_options; ?>
+        </select>
+    </form>
+
+    <!-- Pricing data table -->
+    <div id="pricing-table-container" style="padding: 1rem 0;">
+        <?php
+        // Retrieve all pricing data initially
+        $pricing_data = get_pricing_data();
+        if ( $pricing_data ) {
+          render_pricing_table_data( $pricing_data );
+        } else {
+          echo '<p>No pricing data found.</p>';
+        }
+        ?>
+    </div>
+</div>
+
+  <?php
+}
 
 /* ----------------------------------------------------------------------------------- /
 / Step 6: Add the plugin settings page and sub-pages to the admin menu
@@ -188,16 +157,8 @@ function complete_blinds_add_menu_pages() {
     'complete_blinds_settings_page'
   );
   
-  // Add sub-pages for Blinds and Address Book
-  add_submenu_page(
-    'complete_blinds',
-    'Blinds',
-    'Blinds',
-    'manage_options',
-    'complete_blinds_blinds',
-    'complete_blinds_blinds_page'
-  );
-
+  // Add sub-pages
+  
   add_submenu_page(
     'complete_blinds',
     'Address Book',
@@ -205,19 +166,14 @@ function complete_blinds_add_menu_pages() {
     'manage_options',
     'edit.php?post_type=address_book',
   );
+  
   add_submenu_page(
     'complete_blinds',
-    'Windows',
-    'Windows',
+    'Pricing Tables',
+    'Pricing Tables',
     'manage_options',
-    'edit.php?post_type=cb_window',
-  );
-  add_submenu_page(
-    'complete_blinds',
-    'Doors',
-    'Doors',
-    'manage_options',
-    'edit.php?post_type=cb_door',
+    'pricing-tables',
+    'render_blind_pricing_page'
   );
 }
 
