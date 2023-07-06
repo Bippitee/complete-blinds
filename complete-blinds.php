@@ -7,6 +7,7 @@
  * Version: 1.0
  * Author URI: https://www.foxandbear.dev
  * Text Domain: complete-blinds
+ * Includes 'dominant-color-images' plugin for dominant color images from WordPress Perfomance - not available as standalone plugin
  */
 
 register_activation_hook( __FILE__, 'create_pricing_table' );
@@ -75,10 +76,11 @@ include "address-book.php";
 include "woo/producttab.php";
 include "woo/filterElements.php";
 include "woo/taxonomyFilter.php";
-include "media-folders.php";
+// include "media-folders.php";
 include "pricing-tables.php";
 include "graphql/typedefs.php";
 include "graphql/resolvers.php";
+include "dominant-color-images/dominant-color-images.php";
 
 // GraphQL authentication et. al. 
 define( 'GRAPHQL_JWT_AUTH_SECRET_KEY', 'purple-monkey-dishwasher' );
@@ -223,12 +225,6 @@ if ( empty( $terms_exist ) && ! is_wp_error( $terms_exist ) ) {
 
 add_action( 'init', 'cb_register_taxonomy_blind_type' );
 
-
-
-
-
-
-
 //gets SiteLogo from customizer
 add_action( 'graphql_register_types', function() {
 	register_graphql_field( 'RootQuery', 'siteLogo', [
@@ -249,3 +245,22 @@ add_action( 'graphql_register_types', function() {
 	]  );
 
 } );
+
+
+add_filter('rest_pre_serve_request', 'cors_headersxxxx', 0, 4 );
+    function cors_headersxxxx() {
+      header( 'Access-Control-Allow-Origin: *');
+      header( 'Access-Control-Allow-Methods: POST, GET, OPTIONS, PUT, DELETE' );
+      header( 'Access-Control-Allow-Credentials: true' );
+      header( 'Access-Control-Allow-Headers: Authorization, Content-Type, X-Requested-With, X-USER-ID' );
+    }
+
+
+    add_filter('rest_api_init', 'wp_add_cors_support');
+    function wp_add_cors_support() {
+      $enable_cors = true;
+      if ($enable_cors) {
+        $headers = 'Access-Control-Allow-Headers, X-Requested-With, Content-Type, Accept, Origin, Authorization';
+        header( sprintf( 'Access-Control-Allow-Headers: %s', $headers ) );
+      }
+    }

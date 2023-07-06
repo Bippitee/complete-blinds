@@ -56,7 +56,6 @@ add_action( 'graphql_register_types', function () {
             //get 'cblinds_pricing_group_' . $blind_type->slug value
             $pricing_group = get_post_meta( $product->ID, 'cblinds_pricing_group_' . $blind_type->slug, true );
             if( !empty( $pricing_group ) ) {
-              error_log( $product->name .' '. $pricing_group );
               $blind_type_data[] = array(
                 'name' => (string) $blind_type->name,
                 'slug' => (string) $blind_type->slug,
@@ -131,7 +130,6 @@ add_action('graphql_register_types', function() {
         $blind_type = get_term_by('slug', $blind_type_slug, 'blind_type');
         $query = "SELECT * FROM {$wpdb->prefix}blind_pricing WHERE group_number = %d AND blind_type = %s";
         $prepQuery = $wpdb->prepare($query, $group_number, $blind_type_slug);  
-        error_log($prepQuery);    
         $pricing = $wpdb->get_results($prepQuery);
         
         $pricing_values = array();
@@ -151,3 +149,60 @@ add_action('graphql_register_types', function() {
     ]);
   }
 );
+
+//Top level blind types i.e. no parent
+add_action('graphql_register_types', function() {
+    register_graphql_field('RootQuery', 'TopLevelBlindType', [
+      'type' => ['list_of' => 'TopLevelBlindType'],
+      'description' => __('Blind types', 'complete-blinds'),
+      'resolve' => function($post) {
+        $blind_types = get_terms(array(
+          'taxonomy' => 'blind_type',
+          'hide_empty' => false,
+          'parent' => 0,
+        ));
+  
+        $blind_type_data = array();
+        foreach ($blind_types as $blind_type) {
+          $blind_type_value = array(
+            'name' => (string) $blind_type->name,
+            'slug' => (string) $blind_type->slug,
+            'id' => (string) $blind_type->term_id,
+          );
+          $blind_type_data[] = $blind_type_value;
+        }
+  
+        return !empty($blind_type_data) ? $blind_type_data : ['No Value'];
+      }
+    ]);
+  }
+);
+
+add_action('graphql_register_types', function() {
+  register_graphql_field('MediaItem', 'dominantColor', [
+      'type' => 'String',
+      'description' => __('Dominant color of the media item', 'complete-blinds'),
+      'resolve' => function($mediaItem) {
+        $meta_data = wp_get_attachment_metadata($mediaItem->id);
+        if (isset($meta_data['dominant_color'])) {
+          $dominantColor = $meta_data['dominant_color'];
+          return !empty($dominantColor) ? $dominantColor : 'No Value';
+      }
+    }
+  ]);
+});
+
+add_action('graphql_register_types', function() {
+  register_graphql_field('MediaItem', 'base64', [
+      'type' => 'String',
+      'description' => __('Converted to base64 to fix CORS issues', 'complete-blinds'),
+      'resolve' => function($mediaItem) {
+        $imageData=base64_encode(file_get_contents($mediaItem->guid));
+        $mimeType = wp_check_filetype($mediaItem->guid)['type'];
+        error_log(print_r(wp_check_filetype($mediaItem->guid), true));
+
+        
+        return !empty($imageData) ? 'data:'.$mimeType.';base64,'.$imageData : 'No Value';
+      }
+  ]);
+});

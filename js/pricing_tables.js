@@ -9,6 +9,8 @@ jQuery(document).ready(function($) {
         updatePricingTable();
     });
 
+    
+
     // Function to update the pricing data table
     function updatePricingTable() {
         var blindType = $('#blind-type').val();
@@ -33,6 +35,14 @@ jQuery(document).ready(function($) {
                     let html = '<p>No pricing data found for the selected blind and group.</p><div class="file-upload"><label for="pricing-data-file"><div class="icon-container"><svg aria-hidden="true" class="svg-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg><p class="paragraph-text"><span class="font-semibold">Click to upload CSV file</span> or drag and drop</p></div><input id="pricing-data-file"name="pricing-data-file" type="file"  accept=".csv" />    </label></div>';
                     $('#pricing-table-container').html(html);
                     $('#pricing-data-file').on('change', handleCSVFileChange);
+                        //handler for file upload input
+                        $('.file-upload label').on('dragenter', function(e) {
+                            this.classList.add('dragover');
+                        })
+                        .on('dragleave dragend drop dragexit', function(e) {
+                            this.classList.remove('dragover');
+
+                        });
                 } else {
                     // Update the pricing table with the received HTML
                     $('#pricing-table-container').html(response.data);

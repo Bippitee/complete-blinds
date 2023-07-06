@@ -46,6 +46,27 @@ add_action( 'graphql_register_types', function () {
   ] );
 });
 
+//Top level blind types i.e. no children
+add_action( 'graphql_register_types', function () {
+  register_graphql_object_type( 'TopLevelBlindType', [
+    'description' => __( 'Top level blind type details.', 'complete-blinds' ),
+    'fields'      => [
+      'name' => [
+        'type'        => 'String',
+        'description' => __( 'The name of the blind type.', 'complete-blinds' ),
+      ],
+      'slug' => [
+        'type'        => 'String',
+        'description' => __( 'The slug of the blind type.', 'complete-blinds' ),
+      ],
+      'id'   => [
+        'type'        => 'ID',
+        'description' => __( 'The ID of the blind type.', 'complete-blinds' ),
+      ],
+    ],
+  ] );
+});
+
 //Pricing table values definition
 add_action( 'graphql_register_types', function () {
   register_graphql_object_type( 'PricingTableValue', [
